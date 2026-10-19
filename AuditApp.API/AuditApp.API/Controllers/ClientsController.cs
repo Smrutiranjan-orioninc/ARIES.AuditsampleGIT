@@ -19,15 +19,31 @@ namespace AuditApp.API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Client>>> GetClients()
         {
-            return await _context.Clients.ToListAsync();
+            // Include each client's audits so callers don't need a second
+            // round-trip to see audit history per client.
+            return await _context.Clients.Include(c => c.Audits).ToListAsync();
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Client>> GetClient(int id)
         {
-            var client = await _context.Clients.FindAsync(id);
+            var client = await _context.Clients.Include(c => c.Audits).FirstOrDefaultAsync(c => c.Id == id);
             if (client == null) return NotFound();
             return client;
+        }
+
+        [HttpGet("{id}/audit-summary")]
+        public async Task<ActionResult<IEnumerable<object>>> GetClientAuditSummary(int id)
+        {
+            var audits = await _context.Audits.Where(a => a.ClientId == id).ToListAsync();
+            var summary = audits.Select(a => new
+            {
+                a.Id,
+                a.Title,
+                a.Status,
+                LeadAuditor = a.Auditor.FullName
+            });
+            return Ok(summary);
         }
 
         [HttpPost]

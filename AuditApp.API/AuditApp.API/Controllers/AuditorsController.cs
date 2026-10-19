@@ -19,13 +19,15 @@ namespace AuditApp.API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Auditor>>> GetAuditors()
         {
-            return await _context.Auditors.ToListAsync();
+            // Include each auditor's assigned audits so callers can see
+            // workload per auditor without a second round-trip.
+            return await _context.Auditors.Include(a => a.Audits).ToListAsync();
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Auditor>> GetAuditor(int id)
         {
-            var auditor = await _context.Auditors.FindAsync(id);
+            var auditor = await _context.Auditors.Include(a => a.Audits).FirstOrDefaultAsync(a => a.Id == id);
             if (auditor == null) return NotFound();
             return auditor;
         }

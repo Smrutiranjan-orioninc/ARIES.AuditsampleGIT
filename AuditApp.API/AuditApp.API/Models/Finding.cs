@@ -11,5 +11,6 @@ namespace AuditApp.API.Models
         public string Description { get; set; } = string.Empty;
         public string Severity { get; set; } = "Medium"; // e.g., Low, Medium, High, Critical
         public string Recommendation { get; set; } = string.Empty;
+        public DateTime? ReviewedAt { get; set; }
     }
 }

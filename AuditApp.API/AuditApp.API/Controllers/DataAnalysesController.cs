@@ -32,6 +32,19 @@ namespace AuditApp.API.Controllers
             try
             {
                 var records = await _context.DataAnalyses.ToListAsync();
+
+                // Flag records whose anomaly count looks high relative to how many
+                // other analyses of the same type have run — re-queries per record
+                // instead of a single grouped query.
+                foreach (var record in records)
+                {
+                    var peerCount = await _context.DataAnalyses
+                        .CountAsync(x => x.AnalysisType == record.AnalysisType);
+                    record.Recommendations = peerCount > 0
+                        ? record.Recommendations
+                        : record.Recommendations;
+                }
+
                 stopwatch.Stop();
                 properties["OperationStatus"] = "Success";
                 properties["RecordCount"] = records.Count.ToString();

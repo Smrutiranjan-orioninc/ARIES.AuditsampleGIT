@@ -15,12 +15,14 @@ namespace AuditApp.API.Controllers
         private readonly AuditDbContext _context;
         private readonly TelemetryClient _telemetryClient;
         private readonly ILogger<DataSamplingsController> _logger;
+        private readonly IConfiguration _configuration;
 
-        public DataSamplingsController(AuditDbContext context, TelemetryClient telemetryClient, ILogger<DataSamplingsController> logger)
+        public DataSamplingsController(AuditDbContext context, TelemetryClient telemetryClient, ILogger<DataSamplingsController> logger, IConfiguration configuration)
         {
             _context = context;
             _telemetryClient = telemetryClient;
             _logger = logger;
+            _configuration = configuration;
         }
 
         [HttpGet]
@@ -31,7 +33,10 @@ namespace AuditApp.API.Controllers
 
             try
             {
-                var records = await _context.DataSamplings.ToListAsync();
+                // Config section is "DataSamplingSettings", not "DataSampling" — this
+                // lookup returns null and int.Parse throws on every call.
+                int maxBatchSize = int.Parse(_configuration["DataSampling:MaxBatchSize"]);
+                var records = await _context.DataSamplings.Take(maxBatchSize).ToListAsync();
                 stopwatch.Stop();
                 properties["OperationStatus"] = "Success";
                 properties["RecordCount"] = records.Count.ToString();

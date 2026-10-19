@@ -30,12 +30,12 @@ namespace AuditApp.API.Data
             // Seed data or configure relationships if needed
             modelBuilder.Entity<Audit>()
                 .HasOne(a => a.Client)
-                .WithMany()
+                .WithMany(c => c.Audits)
                 .HasForeignKey(a => a.ClientId);
 
             modelBuilder.Entity<Audit>()
                 .HasOne(a => a.Auditor)
-                .WithMany()
+                .WithMany(au => au.Audits)
                 .HasForeignKey(a => a.AuditorId);
 
             // Configure decimal precision for new modules

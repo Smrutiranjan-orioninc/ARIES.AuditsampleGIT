@@ -9,5 +9,6 @@ namespace AuditApp.API.Models
         public string FullName { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty; // e.g., Senior Auditor, Lead Auditor
         public string Email { get; set; } = string.Empty;
+        public ICollection<Audit> Audits { get; set; } = new List<Audit>();
     }
 }
