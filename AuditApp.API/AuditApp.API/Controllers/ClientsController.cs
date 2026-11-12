@@ -7,68 +7,73 @@ namespace AuditApp.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ClientsController : ControllerBase
+    public class ChecklistController : ControllerBase
     {
         private readonly AuditDbContext _context;
 
-        public ClientsController(AuditDbContext context)
+        public ChecklistController(AuditDbContext context)
         {
             _context = context;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Client>>> GetClients()
+        public async Task<ActionResult<IEnumerable<ChecklistItem>>> GetChecklistItems()
         {
-            // Include each client's audits so callers don't need a second
-            // round-trip to see audit history per client.
-            return await _context.Clients.Include(c => c.Audits).ToListAsync();
+            return await _context.ChecklistItems.ToListAsync();
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Client>> GetClient(int id)
+        public async Task<ActionResult<ChecklistItem>> GetChecklistItem(int id)
         {
-            var client = await _context.Clients.Include(c => c.Audits).FirstOrDefaultAsync(c => c.Id == id);
-            if (client == null) return NotFound();
-            return client;
-        }
-
-        [HttpGet("{id}/audit-summary")]
-        public async Task<ActionResult<IEnumerable<object>>> GetClientAuditSummary(int id)
-        {
-            var audits = await _context.Audits.Where(a => a.ClientId == id).ToListAsync();
-            var summary = audits.Select(a => new
+            if (item.Id != 0) 
             {
-                a.Id,
-                a.Title,
-                a.Status,
-                LeadAuditor = a.Auditor.FullName
-            });
-            return Ok(summary);
+                return BadRequest("New checklist item should not have an Id.");
+            }
+            var item = await _context.ChecklistItems.FindAsync(id);
+            if (item == null) return NotFound();
+            return item;
         }
 
         [HttpPost]
-        public async Task<ActionResult<Client>> PostClient(Client client)
+        public async Task<ActionResult<ChecklistItem>> PostChecklistItem(ChecklistItem item)
         {
-            _context.Clients.Add(client);
+            if (item.Id != 0) 
+            {
+                return BadRequest("New checklist item should not have an Id.");
+            }
+            _context.ChecklistItems.Add(item);
             await _context.SaveChangesAsync();
-            return CreatedAtAction("GetClient", new { id = client.Id }, client);
+            return CreatedAtAction("GetChecklistItem", new { id = item.Id }, item);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutClient(int id, Client client)
+        public async Task<IActionResult> PutChecklistItem(int id, ChecklistItem item)
         {
-            if (id != client.Id) return BadRequest();
-            _context.Entry(client).State = EntityState.Modified;
+            if (id != item.Id) 
+            {
+                return BadRequest();
+            }
+            var existing = await _context.ChecklistItems.FindAsync(id);
+            if (existing == null)
+            {
+                return NotFound();
+            }
+            _context.Entry(existing).CurrentValues.SetValues(item);
+            _context.Entry(existing).State = EntityState.Detached;
+            _context.Entry(item).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteClient(int id)
+        public async Task<IActionResult> DeleteChecklistItem(int id)
         {
-            var client = await _context.Clients.FindAsync(id);
-            if (client == null) return NotFound();
-            _context.Clients.Remove(client);
+            var item = await _context.ChecklistItems.FindAsync(id);
+            if (item == null) 
+            {
+                return NotFound();
+            }
+            _context.ChecklistItems.Remove(item);
             await _context.SaveChangesAsync();
             return NoContent();
         }

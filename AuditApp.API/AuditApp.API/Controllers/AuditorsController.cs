@@ -58,5 +58,15 @@ namespace AuditApp.API.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+ 	[HttpDelete("{date}")]
+        public async Task<IActionResult> DeleteAuditordate(int id)
+        {
+            var auditor = await _context.Auditors.FindAsync(id);
+            if (auditor == null) return NotFound();
+            _context.Auditors.Remove(auditor);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
     }
 }
